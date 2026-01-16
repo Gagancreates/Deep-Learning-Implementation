@@ -1,4 +1,6 @@
 # Seq2Seq from Scratch: Building an English-to-French Translator with LSTMs
+![alt text](image.png)
+![alt text](image-1.png)
 
 A complete guide to understanding and implementing Sequence-to-Sequence models.
 
