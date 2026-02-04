@@ -78,7 +78,8 @@ where head_i = Attention(Q @ W_Q^i, K @ W_K^i, V @ W_V^i)
 
 ### 2. Positional Encoding
 
-Self-attention is permutation-invariant, so we must inject position information.
+**Why It's Needed:**
+Self-attention is permutation-invariant (treats input as a set, not sequence). Without positional encoding, "I love cats" and "cats love I" would be identical to the model.
 
 **Sinusoidal encoding (original paper):**
 ```
@@ -86,10 +87,53 @@ PE(pos, 2i)   = sin(pos / 10000^(2i/d_model))
 PE(pos, 2i+1) = cos(pos / 10000^(2i/d_model))
 ```
 
+Where:
+- `pos` = position in sequence (0, 1, 2, ...)
+- `i` = dimension index
+- Even dimensions (0, 2, 4...) use **sine**
+- Odd dimensions (1, 3, 5...) use **cosine**
+
+**Concrete Example:**
+
+Let's say `d_model = 4` and we have 3 tokens: `["I", "love", "cats"]` → positions `[0, 1, 2]`
+
+For position 0 ("I"):
+```
+PE(0, 0) = sin(0 / 10000^(0/4)) = sin(0) = 0.000
+PE(0, 1) = cos(0 / 10000^(0/4)) = cos(0) = 1.000
+PE(0, 2) = sin(0 / 10000^(2/4)) = sin(0) = 0.000
+PE(0, 3) = cos(0 / 10000^(2/4)) = cos(0) = 1.000
+Vector: [0.000, 1.000, 0.000, 1.000]
+```
+
+For position 1 ("love"):
+```
+PE(1, 0) = sin(1 / 10000^(0/4)) = sin(1) = 0.841
+PE(1, 1) = cos(1 / 10000^(0/4)) = cos(1) = 0.540
+PE(1, 2) = sin(1 / 10000^(2/4)) = sin(0.01) = 0.010
+PE(1, 3) = cos(1 / 10000^(2/4)) = cos(0.01) = 1.000
+Vector: [0.841, 0.540, 0.010, 1.000]
+```
+
+For position 2 ("cats"):
+```
+PE(2, 0) = sin(2) = 0.909
+PE(2, 1) = cos(2) = -0.416
+PE(2, 2) = sin(0.02) = 0.020
+PE(2, 3) = cos(0.02) = 0.999
+Vector: [0.909, -0.416, 0.020, 0.999]
+```
+
+**Final Step:**
+```
+Final Input = Word Embedding + Positional Encoding
+```
+
 **Why sinusoidal?**
 - Allows extrapolation to longer sequences
 - Relative positions: PE(pos+k) can be represented as linear function of PE(pos)
-- No learned parameters
+- No learned parameters - generalizes to unseen sequence lengths
+- Different frequencies create unique signatures per position
 
 **Alternative (modern):**
 ```python
